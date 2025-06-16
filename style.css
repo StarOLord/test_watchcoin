@@ -1,0 +1,262 @@
+/* Переменные для цветов */
+:root {
+    --background-primary: #FFFFFF;
+    --background-secondary: #F5F5F5;
+    --text-primary: #111111;
+    --text-secondary: #BABABA;
+    --profit-green: #00CF5E;
+    --loss-red: #F01C1C;
+}
+
+body {
+    font-family: 'Inter', sans-serif; /* SF Pro Rounded напрямую не доступен в Google Fonts, 'Inter' - хорошая альтернатива по виду */
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between; /* Распределяем контент и навигацию */
+    min-height: 100vh; /* Занимаем всю высоту экрана */
+    box-sizing: border-box; /* Включаем padding в общую высоту/ширину */
+}
+
+/* Общие стили для главного контейнера контента */
+.main-content {
+    flex-grow: 1; /* Занимает доступное пространство */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 100px; /* Отступ от верхней границы */
+    padding-bottom: 20px; /* Отступ для нижней кнопки/списка */
+    box-sizing: border-box;
+    overflow-y: auto; /* Для скроллинга, если контента много */
+}
+
+/* --- Стили для пустого состояния (Экран 2.1) --- */
+.empty-state-container {
+    display: flex; /* Будет переключаться с none */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Центрируем по вертикали внутри .main-content */
+    flex-grow: 1; /* Занимает оставшееся пространство */
+    width: 100%;
+}
+
+.empty-state-image {
+    width: 128px;
+    height: 128px;
+    background-color: #E0E0E0; /* Заглушка для изображения */
+    border-radius: 50%;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px; /* Для демонстрации */
+    color: var(--text-secondary);
+}
+
+.empty-state-text {
+    font-size: 20px;
+    font-weight: 600; /* semi bold */
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+/* --- Стили для заполненного портфеля (Экран 2.2) --- */
+.portfolio-content {
+    display: flex; /* Переключается с none */
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    /* padding-top будет регулироваться main-content */
+}
+
+.portfolio-overview {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 32px; /* Расстояние до кнопки */
+}
+
+.total-label {
+    font-size: 20px;
+    font-weight: 600; /* semi bold */
+    color: var(--text-secondary);
+    margin-bottom: 8px; /* Расстояние до общей суммы */
+}
+
+.total-value {
+    font-size: 32px;
+    font-weight: 600; /* semi bold */
+    color: var(--text-primary);
+    margin-bottom: 8px; /* Неявный отступ до P/L, если он не указан явно */
+}
+
+.profit-loss {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.profit-loss.positive {
+    color: var(--profit-green);
+}
+
+.profit-loss.negative {
+    color: var(--loss-red);
+}
+
+/* Кнопка Add transaction (общие стили для обоих состояний) */
+.add-transaction-button {
+    display: flex;
+    flex-direction: column; /* Иконка и текст друг под другом */
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    gap: 10px;
+    border-radius: 16px;
+    background-color: var(--background-secondary);
+    border: none;
+    cursor: pointer;
+    width: 200px; /* Увеличил ширину для лучшего вида */
+    margin-bottom: 32px; /* Расстояние до плашек токенов */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.add-transaction-button svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-primary);
+}
+
+.add-transaction-button span {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Список токенов (плашки) */
+.token-list {
+    width: 100%;
+    padding: 0 16px; /* Отступы от краев экрана */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Расстояние между плашками */
+}
+
+.token-card {
+    display: flex;
+    height: 64px;
+    padding: 12px;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px;
+    background: var(--background-secondary);
+}
+
+.token-info-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.token-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #D3D3D3; /* Заглушка для иконки */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px; /* Для демонстрации */
+    color: #888;
+    flex-shrink: 0; /* Не сжимается */
+}
+
+.token-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.token-name {
+    font-size: 18px;
+    font-weight: 500; /* Medium */
+    color: var(--text-primary);
+}
+
+.token-quantity-ticker {
+    font-size: 14px;
+    font-weight: 500; /* Medium */
+    color: var(--text-primary);
+    margin-top: 2px;
+}
+
+.token-info-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Выравнивание по правому краю */
+}
+
+.token-current-value {
+    font-size: 18px;
+    font-weight: 500; /* Medium */
+    color: var(--text-primary);
+}
+
+.token-profit-loss {
+    font-size: 14px;
+    font-weight: 500; /* Medium */
+    margin-top: 2px;
+}
+
+/* Нижнее меню навигации */
+.bottom-navigation {
+    width: 274px;
+    height: 40px;
+    padding: 4px;
+    gap: 4px;
+    border-radius: 18px;
+    background-color: var(--background-secondary);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+    position: sticky; /* Приклеиваем к низу */
+    bottom: 0;
+}
+
+.nav-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    align-self: stretch;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.nav-item.active {
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+}
+
+.nav-item.inactive {
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+
+.nav-item svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.nav-item span {
+    font-size: 14px;
+    font-weight: 500;
+}

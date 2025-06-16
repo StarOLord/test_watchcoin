@@ -3,166 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio - Empty</title>
+    <title>My Portfolio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Переменные для цветов */
-        :root {
-            --background-primary: #FFFFFF;
-            --background-secondary: #F5F5F5;
-            --text-primary: #111111;
-            --text-secondary: #BABABA;
-            --profit-green: #00CF5E;
-            --loss-red: #F01C1C;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif; /* SF Pro Rounded напрямую не доступен в Google Fonts, 'Inter' - хорошая альтернатива по виду */
-            background-color: var(--background-primary);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between; /* Распределяем контент и навигацию */
-            min-height: 100vh; /* Занимаем всю высоту экрана */
-            box-sizing: border-box; /* Включаем padding в общую высоту/ширину */
-        }
-
-        /* Центральная группа элементов для пустого состояния */
-        .empty-state-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: auto; /* Прижимает к центру, если есть space-between */
-            margin-bottom: auto; /* Прижимает к центру, если есть space-between */
-            padding: 20px; /* Небольшой отступ от краев */
-        }
-
-        .empty-state-image {
-            width: 128px;
-            height: 128px;
-            background-color: #E0E0E0; /* Заглушка для изображения */
-            border-radius: 50%; /* Если иконка круглая */
-            margin-bottom: 16px; /* Расстояние между картинкой и текстом */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px; /* Для демонстрации */
-            color: #BABABA; /* Цвет для заглушки */
-        }
-
-        .empty-state-text {
-            font-size: 20px;
-            font-weight: 600; /* semi bold */
-            color: var(--text-secondary);
-            margin-bottom: 16px; /* Расстояние между текстом и кнопкой */
-        }
-
-        .add-transaction-button {
-            display: flex;
-            flex-direction: column; /* Иконка и текст друг под другом */
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-            gap: 10px; /* Расстояние между иконкой и текстом внутри кнопки */
-            border-radius: 16px;
-            background-color: var(--background-secondary);
-            border: none;
-            cursor: pointer;
-            width: 180px; /* Примерная ширина кнопки */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Небольшая тень для объема */
-        }
-
-        .add-transaction-button svg {
-            width: 20px;
-            height: 20px;
-            fill: var(--text-primary);
-        }
-
-        .add-transaction-button span {
-            font-size: 16px; /* Размер текста кнопки */
-            font-weight: 500; /* Medium */
-            color: var(--text-primary);
-        }
-
-        /* Нижнее меню навигации */
-        .bottom-navigation {
-            width: 274px;
-            height: 40px;
-            padding: 4px;
-            gap: 4px;
-            border-radius: 18px;
-            background-color: var(--background-secondary);
-            display: flex;
-            justify-content: space-around; /* Распределяем элементы по ширине */
-            align-items: center;
-            margin-bottom: 20px; /* Отступ от низа экрана */
-            flex-shrink: 0; /* Не сжимается */
-        }
-
-        .nav-item {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            flex: 1; /* Распределяем поровну */
-            align-self: stretch;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .nav-item.active {
-            background-color: var(--background-primary);
-            color: var(--text-primary);
-        }
-
-        .nav-item.inactive {
-            background-color: transparent; /* Неактивный фон прозрачный, чтобы просвечивал фон меню */
-            color: var(--text-secondary);
-        }
-
-        .nav-item svg {
-            width: 16px;
-            height: 16px;
-            fill: currentColor; /* Цвет иконки соответствует цвету текста родителя */
-        }
-
-        .nav-item span {
-            font-size: 14px; /* Размер текста навигации */
-            font-weight: 500;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" href="style.css"> </head>
 <body>
-    <div class="empty-state-container">
-        <div class="empty-state-image">
-            ✨
+    <div class="main-content" id="mainContent">
+
+        <div class="empty-state-container" id="emptyState">
+            <div class="empty-state-image">
+                ✨
+            </div>
+            <div class="empty-state-text">Null transaction</div>
+            <button class="add-transaction-button" id="addTransactionButtonEmpty">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Add transaction</span>
+            </button>
         </div>
-        <div class="empty-state-text">Null transaction</div>
-        <button class="add-transaction-button">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Add transaction</span>
-        </button>
+
+        <div class="portfolio-content" id="portfolioContent" style="display: none;">
+            <div class="portfolio-overview">
+                <div class="total-label">Total</div>
+                <div class="total-value" id="totalPortfolioValue">$0.00</div>
+                <div class="profit-loss" id="portfolioProfitLoss">+0.00% ($0.00)</div>
+            </div>
+
+            <button class="add-transaction-button" id="addTransactionButtonFilled">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Add transaction</span>
+            </button>
+
+            <div class="token-list" id="tokenList">
+                </div>
+        </div>
+
     </div>
 
     <div class="bottom-navigation">
-        <div class="nav-item active">
+        <div class="nav-item active" id="navHome">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 10V18C3 18.5304 3.21071 19.0391 3.58579 19.4142C3.96086 19.7893 4.46957 20 5 20H19C19.5304 20 20.0391 19.7893 20.4142 19.4142C20.7893 19.0391 21 18.5304 21 18V10M12 2L2 12H22L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span>Home</span>
         </div>
-        <div class="nav-item inactive">
+        <div class="nav-item inactive" id="navSettings">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM15.94 17.65L14.73 16.44C13.88 17.15 12.8 17.58 11.66 17.58C9.52 17.58 7.79 15.86 7.79 13.72C7.79 11.58 9.52 9.85 11.66 9.85C13.8 9.85 15.53 11.58 15.53 13.72C15.53 14.86 15.11 15.94 14.4 16.79L15.61 18C16.82 16.59 17.53 14.7 17.53 12.7C17.53 9.4 15.06 6.7 11.66 6.7C8.26 6.7 5.79 9.4 5.79 12.7C5.79 16 8.26 18.7 11.66 18.7C13.66 18.7 15.55 17.99 16.96 16.78L17.57 17.39L15.94 17.65Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span>Settings</span>
         </div>
     </div>
+
+    <script>
+        // Имитация данных портфеля
+        const MOCK_PORTFOLIO_DATA = [
+            {
+                name: "Bitcoin",
+                ticker: "BTC",
+                icon: "₿", // В реальном приложении - URL к иконке
+                quantity: 0.15,
+                avgBuyPrice: 68000,
+                currentPrice: 70500 // Пример текущей цены
+            },
+            {
+                name: "Ethereum",
+                ticker: "ETH",
+                icon: "Ξ",
+                quantity: 1.2,
+                avgBuyPrice: 3500,
+                currentPrice: 3800
+            },
+            {
+                name: "Solana",
+                ticker: "SOL",
+                icon: "◎",
+                quantity: 15.5,
+                avgBuyPrice: 150,
+                currentPrice: 140
+            },
+             {
+                name: "Ripple",
+                ticker: "XRP",
+                icon: " XRP",
+                quantity: 1000,
+                avgBuyPrice: 0.5,
+                currentPrice: 0.52
+            }
+        ];
+
+        // Функция для форматирования чисел (для денег и процентов)
+        function formatCurrency(value) {
+            return $${value.toFixed(2)};
+        }
+
+        function formatPercentage(value) {
+            return ${value.toFixed(2)}%;
+        }
+
+        // Функция для расчета и обновления портфеля
+        function updatePortfolio(portfolioData) {
+            const emptyState = document.getElementById('emptyState');
+            const portfolioContent = document.getElementById('portfolioContent');
+            const tokenList = document.getElementById('tokenList');
+            const totalPortfolioValueElement = document.getElementById('totalPortfolioValue');
+            const portfolioProfitLossElement = document.getElementById('portfolioProfitLoss');
+
+            if (!portfolioData || portfolioData.length === 0) {
+                emptyState.style.display = 'flex';
+                portfolioContent.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                portfolioContent.style.display = 'flex';
+                portfolioContent.style.flexDirection = 'column';
+                portfolioContent.style.alignItems = 'center';
+
+                let totalValue = 0;
+                let totalInvested = 0;
+                tokenList.innerHTML = ''; // Очищаем список перед заполнением
+
+                portfolioData.forEach(token => {
+                    const currentValue = token.quantity * token.currentPrice;
+                    const investedValue = token.quantity * token.avgBuyPrice;
+                    const profitLossAbsolute = currentValue - investedValue;
+                    const profitLossPercentage = (profitLossAbsolute / investedValue) * 100;
+
+                    totalValue += currentValue;
+                    totalInvested += investedValue;
+
+                    const profitLossClass = profitLossAbsolute >= 0 ? 'positive' : 'negative';
+                    const profitLossSign = profitLossAbsolute >= 0 ? '+' : '';
+
+                    const tokenCard = `
+                        <div class="token-card">
+                            <div class="token-info-left">
+                                <div class="token-icon">${token.icon}</div>
+                                <div class="token-details">
+                                    <div class="token-name">${token.name}</div>
+                                    <div class="token-quantity-ticker">${token.quantity} ${token.ticker}</div>
+                                </div>
+                            </div>
+                            <div class="token-info-right">
+                                <div class="token-current-value">${formatCurrency(currentValue)}</div>
+                                <div class="token-profit-loss ${profitLossClass}">
+                                    ${profitLossSign}${formatPercentage(profitLossPercentage)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    tokenList.insertAdjacentHTML('beforeend', tokenCard);
+                });
+
+                const totalProfitLossAbsolute = totalValue - totalInvested;
+                const totalProfitLossPercentage = (totalProfitLossAbsolute / totalInvested) * 100;
+                const totalProfitLossClass = totalProfitLossAbsolute >= 0 ? 'positive' : 'negative';
+                const totalProfitLossSign = totalProfitLossAbsolute >= 0 ? '+' : '';
+
+                totalPortfolioValueElement.textContent = formatCurrency(totalValue);
+                portfolioProfitLossElement.innerHTML = ${totalProfitLossSign}${formatCurrency(totalProfitLossAbsolute)} <span class="${totalProfitLossClass}">(${totalProfitLossSign}${formatPercentage(totalProfitLossPercentage)})</span>;
+                portfolioProfitLossElement.className = profit-loss ${totalProfitLossClass};
+            }
+        }
+
+        // По умолчанию запускаем пустое состояние
+        updatePortfolio([]);
+
+        // Обработчики событий
+        const addTransactionButtonEmpty = document.getElementById('addTransactionButtonEmpty');
+        const addTransactionButtonFilled = document.getElementById('addTransactionButtonFilled');
+
+        addTransactionButtonEmpty.addEventListener('click', () => {
+             alert('Нажали кнопку "Add transaction" из пустого состояния!');
+             updatePortfolio(MOCK_PORTFOLIO_DATA);
+        });
+
+        addTransactionButtonFilled.addEventListener('click', () => {
+            alert('Нажали кнопку "Add transaction" из заполненного состояния!');
+        });
+
+        document.getElementById('navHome').addEventListener('click', () => {
+            alert('Home clicked!');
+        });
+
+        document.getElementById('navSettings').addEventListener('click', () => {
+            alert('Settings clicked!');
+        });
+
+    </script>
 </body>
 </html>
