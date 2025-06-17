@@ -13,7 +13,7 @@
             <div class="empty-state-image">
                 ✨
             </div>
-            <div class="empty-state-text">Null transaction</div>
+            <div class="empty-state-text">No transactions yet</div>
             <button class="add-transaction-button" id="addTransactionButtonEmpty">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -24,7 +24,7 @@
 
         <div class="portfolio-content" id="portfolioContent" style="display: none;">
             <div class="portfolio-overview">
-                <div class="total-label">Total</div>
+                <div class="total-label">Total Portfolio Value</div>
                 <div class="total-value" id="totalPortfolioValue">$0.00</div>
                 <div class="profit-loss" id="portfolioProfitLoss">+0.00% ($0.00)</div>
             </div>
@@ -58,17 +58,19 @@
     </div>
 
     <script>
-        // Имитация данных портфеля
-        const MOCK_PORTFOLIO_DATA = [
+        // Имитация данных портфеля (теперь mutable, чтобы можно было удалять)
+        let MOCK_PORTFOLIO_DATA = [
             {
+                id: 'btc-001', // Добавим ID для уникальной идентификации
                 name: "Bitcoin",
                 ticker: "BTC",
-                icon: "₿", // В реальном приложении - URL к иконке
+                icon: "₿",
                 quantity: 0.15,
                 avgBuyPrice: 68000,
-                currentPrice: 70500 // Пример текущей цены
+                currentPrice: 70500
             },
             {
+                id: 'eth-002',
                 name: "Ethereum",
                 ticker: "ETH",
                 icon: "Ξ",
@@ -77,6 +79,7 @@
                 currentPrice: 3800
             },
             {
+                id: 'sol-003',
                 name: "Solana",
                 ticker: "SOL",
                 icon: "◎",
@@ -84,23 +87,27 @@
                 avgBuyPrice: 150,
                 currentPrice: 140
             },
-             {
+            {
+                id: 'xrp-004',
                 name: "Ripple",
                 ticker: "XRP",
-                icon: " XRP",
+                icon: "XRP",
                 quantity: 1000,
                 avgBuyPrice: 0.5,
                 currentPrice: 0.52
             }
         ];
 
+        // Флаг для режима редактирования (показывать/скрывать кнопки удаления)
+        let isEditingMode = false;
+
         // Функция для форматирования чисел (для денег и процентов)
         function formatCurrency(value) {
-            return $${value.toFixed(2)};
+            return `$${value.toFixed(2)}`;
         }
 
         function formatPercentage(value) {
-            return ${value.toFixed(2)}%;
+            return `${value.toFixed(2)}%`;
         }
 
         // Функция для расчета и обновления портфеля
@@ -114,11 +121,10 @@
             if (!portfolioData || portfolioData.length === 0) {
                 emptyState.style.display = 'flex';
                 portfolioContent.style.display = 'none';
+                isEditingMode = false; // Выключаем режим редактирования, если нет транзакций
             } else {
                 emptyState.style.display = 'none';
                 portfolioContent.style.display = 'flex';
-                portfolioContent.style.flexDirection = 'column';
-                portfolioContent.style.alignItems = 'center';
 
                 let totalValue = 0;
                 let totalInvested = 0;
@@ -128,7 +134,8 @@
                     const currentValue = token.quantity * token.currentPrice;
                     const investedValue = token.quantity * token.avgBuyPrice;
                     const profitLossAbsolute = currentValue - investedValue;
-                    const profitLossPercentage = (profitLossAbsolute / investedValue) * 100;
+                    // Избегаем деления на ноль, если investedValue равно 0
+                    const profitLossPercentage = investedValue !== 0 ? (profitLossAbsolute / investedValue) * 100 : 0;
 
                     totalValue += currentValue;
                     totalInvested += investedValue;
@@ -137,7 +144,7 @@
                     const profitLossSign = profitLossAbsolute >= 0 ? '+' : '';
 
                     const tokenCard = `
-                        <div class="token-card">
+                        <div class="token-card ${isEditingMode ? 'editing' : ''}" data-id="${token.id}">
                             <div class="token-info-left">
                                 <div class="token-icon">${token.icon}</div>
                                 <div class="token-details">
@@ -151,44 +158,110 @@
                                     ${profitLossSign}${formatPercentage(profitLossPercentage)}
                                 </div>
                             </div>
+                            <button class="delete-token-btn" data-id="${token.id}">
+                                &times;
+                            </button>
                         </div>
                     `;
                     tokenList.insertAdjacentHTML('beforeend', tokenCard);
                 });
 
                 const totalProfitLossAbsolute = totalValue - totalInvested;
-                const totalProfitLossPercentage = (totalProfitLossAbsolute / totalInvested) * 100;
+                // Избегаем деления на ноль, если totalInvested равно 0
+                const totalProfitLossPercentage = totalInvested !== 0 ? (totalProfitLossAbsolute / totalInvested) * 100 : 0;
                 const totalProfitLossClass = totalProfitLossAbsolute >= 0 ? 'positive' : 'negative';
                 const totalProfitLossSign = totalProfitLossAbsolute >= 0 ? '+' : '';
 
                 totalPortfolioValueElement.textContent = formatCurrency(totalValue);
-                portfolioProfitLossElement.innerHTML = ${totalProfitLossSign}${formatCurrency(totalProfitLossAbsolute)} <span class="${totalProfitLossClass}">(${totalProfitLossSign}${formatPercentage(totalProfitLossPercentage)})</span>;
-                portfolioProfitLossElement.className = profit-loss ${totalProfitLossClass};
+                portfolioProfitLossElement.innerHTML = `${totalProfitLossSign}${formatCurrency(totalProfitLossAbsolute)} <span class="${totalProfitLossClass}">(${totalProfitLossSign}${formatPercentage(totalProfitLossPercentage)})</span>`;
             }
+            addDeleteListeners(); // Добавляем слушателей после обновления DOM
         }
 
-        // По умолчанию запускаем пустое состояние
-        updatePortfolio([]);
+        // Функция для добавления слушателей на кнопки удаления
+        function addDeleteListeners() {
+            // Удаляем предыдущие слушатели, чтобы избежать дублирования при каждом вызове updatePortfolio
+            document.querySelectorAll('.delete-token-btn').forEach(button => {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button); // Заменяем элемент, чтобы сбросить слушатели
+            });
+
+            // Добавляем новые слушатели
+            document.querySelectorAll('.delete-token-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const idToDelete = event.target.dataset.id;
+                    if (confirm('Are you sure you want to delete this transaction?')) {
+                        MOCK_PORTFOLIO_DATA = MOCK_PORTFOLIO_DATA.filter(token => token.id !== idToDelete);
+                        updatePortfolio(MOCK_PORTFOLIO_DATA);
+                    }
+                });
+            });
+        }
+
+        // Инициализация портфеля при загрузке
+        updatePortfolio(MOCK_PORTFOLIO_DATA); // Запускаем с моковыми данными
 
         // Обработчики событий
         const addTransactionButtonEmpty = document.getElementById('addTransactionButtonEmpty');
         const addTransactionButtonFilled = document.getElementById('addTransactionButtonFilled');
+        const navHome = document.getElementById('navHome');
+        const navSettings = document.getElementById('navSettings');
 
         addTransactionButtonEmpty.addEventListener('click', () => {
-             alert('Нажали кнопку "Add transaction" из пустого состояния!');
-             updatePortfolio(MOCK_PORTFOLIO_DATA);
+            // В реальном приложении здесь будет открытие формы добавления транзакции
+            alert('Opening "Add transaction" form from empty state!');
+            // Для демонстрации, просто заполняем портфель
+            if (MOCK_PORTFOLIO_DATA.length === 0) { // Если пустой, добавляем моковые данные
+                MOCK_PORTFOLIO_DATA = [
+                    { id: 'btc-001', name: "Bitcoin", ticker: "BTC", icon: "₿", quantity: 0.15, avgBuyPrice: 68000, currentPrice: 70500 },
+                    { id: 'eth-002', name: "Ethereum", ticker: "ETH", icon: "Ξ", quantity: 1.2, avgBuyPrice: 3500, currentPrice: 3800 }
+                ];
+            } else { // Иначе, можно добавить новую транзакцию (пример)
+                MOCK_PORTFOLIO_DATA.push({
+                    id: `new-${Date.now()}`,
+                    name: "Cardano",
+                    ticker: "ADA",
+                    icon: "A",
+                    quantity: 500,
+                    avgBuyPrice: 0.45,
+                    currentPrice: 0.5
+                });
+            }
+            updatePortfolio(MOCK_PORTFOLIO_DATA);
         });
 
         addTransactionButtonFilled.addEventListener('click', () => {
-            alert('Нажали кнопку "Add transaction" из заполненного состояния!');
+            alert('Opening "Add transaction" form from filled state!');
+            // То же самое, что и для пустой кнопки - в реале будет форма
+            MOCK_PORTFOLIO_DATA.push({
+                id: `new-${Date.now()}`,
+                name: "Litecoin",
+                ticker: "LTC",
+                icon: "Ł",
+                quantity: 5,
+                avgBuyPrice: 70,
+                currentPrice: 75
+            });
+            updatePortfolio(MOCK_PORTFOLIO_DATA);
         });
 
-        document.getElementById('navHome').addEventListener('click', () => {
-            alert('Home clicked!');
+        navHome.addEventListener('click', () => {
+            navHome.classList.add('active');
+            navHome.classList.remove('inactive');
+            navSettings.classList.add('inactive');
+            navSettings.classList.remove('active');
+            isEditingMode = false; // Выключаем режим редактирования при переходе на Home
+            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем, чтобы скрыть кнопки удаления
         });
 
-        document.getElementById('navSettings').addEventListener('click', () => {
-            alert('Settings clicked!');
+        navSettings.addEventListener('click', () => {
+            navSettings.classList.add('active');
+            navSettings.classList.remove('inactive');
+            navHome.classList.add('inactive');
+            navHome.classList.remove('active');
+            isEditingMode = !isEditingMode; // Переключаем режим редактирования
+            alert(`Settings clicked! Editing mode: ${isEditingMode ? 'ON' : 'OFF'}. Click again to toggle.`);
+            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем, чтобы показать/скрыть кнопки удаления
         });
 
     </script>
