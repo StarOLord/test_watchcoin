@@ -57,38 +57,6 @@
         </div>
     </div>
 
-    <div class="add-transaction-modal" id="addTransactionModal">
-        <div class="modal-content">
-            <h2>Add New Transaction</h2>
-
-            <div class="form-group">
-                <label for="coinTicker">Coin / Ticker</label>
-                <input type="text" id="coinTicker" placeholder="e.g., Bitcoin, BTC">
-                <div id="coinSuggestions" class="coin-suggestions"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="quantity">Quantity</label>
-                <input type="number" id="quantity" placeholder="e.g., 0.15" step="any">
-            </div>
-
-            <div class="form-group">
-                <label for="purchasePrice">Purchase Price (USD)</label>
-                <input type="number" id="purchasePrice" placeholder="e.g., 68000" step="any">
-            </div>
-
-            <div class="form-group">
-                <label for="purchaseDate">Date (optional)</label>
-                <input type="date" id="purchaseDate">
-            </div>
-
-            <div class="modal-actions">
-                <button class="button-cancel" id="cancelAddTransaction">Cancel</button>
-                <button class="button-primary" id="saveAddTransaction">Add Transaction</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Имитация данных портфеля (теперь mutable, чтобы можно было удалять)
         let MOCK_PORTFOLIO_DATA = [
@@ -233,145 +201,10 @@
         // Инициализация портфеля при загрузке
         updatePortfolio(MOCK_PORTFOLIO_DATA); // Запускаем с моковыми данными
 
-        // --- Новые элементы для формы добавления транзакции ---
-        const addTransactionModal = document.getElementById('addTransactionModal');
-        const coinTickerInput = document.getElementById('coinTicker');
-        const coinSuggestions = document.getElementById('coinSuggestions');
-        const quantityInput = document.getElementById('quantity');
-        const purchasePriceInput = document.getElementById('purchasePrice');
-        const purchaseDateInput = document.getElementById('purchaseDate');
-        const saveAddTransactionButton = document.getElementById('saveAddTransaction');
-        const cancelAddTransactionButton = document.getElementById('cancelAddTransaction');
-
-        // Обработчики событий (существующие)
         const addTransactionButtonEmpty = document.getElementById('addTransactionButtonEmpty');
         const addTransactionButtonFilled = document.getElementById('addTransactionButtonFilled');
         const navHome = document.getElementById('navHome');
         const navSettings = document.getElementById('navSettings');
-
-        // --- Функция для показа формы добавления ---
-        function showAddTransactionForm() {
-            addTransactionModal.style.display = 'flex'; // Показываем модальное окно
-            // Сбрасываем поля формы
-            coinTickerInput.value = '';
-            quantityInput.value = '';
-            purchasePriceInput.value = '';
-            purchaseDateInput.value = new Date().toISOString().split('T')[0]; // Устанавливаем текущую дату
-            coinSuggestions.innerHTML = ''; // Очищаем предложения
-            saveAddTransactionButton.disabled = true; // Делаем кнопку неактивной по умолчанию
-        }
-
-        // --- Функция для скрытия формы добавления ---
-        function hideAddTransactionForm() {
-            addTransactionModal.style.display = 'none'; // Скрываем модальное окно
-        }
-
-        // --- Валидация формы и активация кнопки сохранения ---
-        function validateAddTransactionForm() {
-            const isCoinFilled = coinTickerInput.value.trim() !== '';
-            const isQuantityFilled = parseFloat(quantityInput.value) > 0;
-            const isPriceFilled = parseFloat(purchasePriceInput.value) > 0;
-            saveAddTransactionButton.disabled = !(isCoinFilled && isQuantityFilled && isPriceFilled);
-        }
-
-        // --- Список доступных монет для автодополнения (для MVP) ---
-        const AVAILABLE_COINS = [
-            { name: "Bitcoin", ticker: "BTC", icon: "₿" },
-            { name: "Ethereum", ticker: "ETH", icon: "Ξ" },
-            { name: "Solana", ticker: "SOL", icon: "◎" },
-            { name: "Ripple", ticker: "XRP", icon: "XRP" },
-            { name: "Cardano", ticker: "ADA", icon: "A" },
-            { name: "Litecoin", ticker: "LTC", icon: "Ł" },
-            { name: "Dogecoin", ticker: "DOGE", icon: "Ɖ" },
-            { name: "Polkadot", ticker: "DOT", icon: "●" },
-            { name: "Binance Coin", ticker: "BNB", icon: "BNB" }
-        ];
-
-        // --- Логика автодополнения для поля монеты ---
-        coinTickerInput.addEventListener('input', () => {
-            const query = coinTickerInput.value.trim().toLowerCase();
-            coinSuggestions.innerHTML = '';
-
-            if (query.length > 0) {
-                const filteredCoins = AVAILABLE_COINS.filter(coin =>
-                    coin.name.toLowerCase().includes(query) ||
-                    coin.ticker.toLowerCase().includes(query)
-                );
-
-                filteredCoins.forEach(coin => {
-                    const suggestionDiv = document.createElement('div');
-                    suggestionDiv.textContent = `${coin.name} (${coin.ticker})`;
-                    suggestionDiv.addEventListener('click', () => {
-                        coinTickerInput.value = coin.ticker; // Вставляем тикер
-                        coinTickerInput.dataset.fullName = coin.name; // Сохраняем полное имя
-                        coinTickerInput.dataset.icon = coin.icon; // Сохраняем иконку
-                        coinSuggestions.innerHTML = ''; // Очищаем предложения
-                        validateAddTransactionForm();
-                    });
-                    coinSuggestions.appendChild(suggestionDiv);
-                });
-            }
-            validateAddTransactionForm();
-        });
-
-        // Слушатели для валидации формы при изменении полей
-        coinTickerInput.addEventListener('change', validateAddTransactionForm); // change для случая выбора из подсказок
-        quantityInput.addEventListener('input', validateAddTransactionForm);
-        purchasePriceInput.addEventListener('input', validateAddTransactionForm);
-
-
-        // --- Обработчик для кнопки "Add Transaction" (в модальном окне) ---
-        saveAddTransactionButton.addEventListener('click', () => {
-            const ticker = coinTickerInput.value.trim().toUpperCase();
-            const quantity = parseFloat(quantityInput.value);
-            const purchasePrice = parseFloat(purchasePriceInput.value);
-            const purchaseDate = purchaseDateInput.value; // Дата пока не используется в расчетах, но сохраняется
-
-            if (!ticker || quantity <= 0 || purchasePrice <= 0) {
-                alert('Please fill in all required fields with valid numbers.');
-                return;
-            }
-
-            // Находим полное имя и иконку из AVAILABLE_COINS или используем тикер
-            const selectedCoin = AVAILABLE_COINS.find(coin => coin.ticker === ticker);
-            const coinName = selectedCoin ? selectedCoin.name : ticker; // Используем имя из списка или просто тикер
-            const coinIcon = selectedCoin ? selectedCoin.icon : ticker.substring(0,1).toUpperCase(); // Первая буква тикера, если нет иконки
-
-            // Для MVP: текущая цена равна цене покупки, или можно добавить фейковую логику
-            // В реальном приложении здесь будет запрос к API
-            const currentPrice = purchasePrice * (1 + (Math.random() * 0.1 - 0.05)); // Случайное изменение на +/- 5%
-
-            const newTransaction = {
-                id: `txn-${Date.now()}`, // Уникальный ID транзакции
-                name: coinName,
-                ticker: ticker,
-                icon: coinIcon,
-                quantity: quantity,
-                avgBuyPrice: purchasePrice,
-                currentPrice: currentPrice, // Имитируем текущую цену
-                purchaseDate: purchaseDate // Сохраняем дату
-            };
-
-            MOCK_PORTFOLIO_DATA.push(newTransaction);
-            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем главный экран
-            hideAddTransactionForm(); // Скрываем форму
-        });
-
-        // --- Обработчик для кнопки "Cancel" в модальном окне ---
-        cancelAddTransactionButton.addEventListener('click', () => {
-            hideAddTransactionForm();
-        });
-
-        // --- Модифицируем существующие обработчики кнопок "Add transaction" ---
-        addTransactionButtonEmpty.addEventListener('click', () => {
-            showAddTransactionForm(); // Теперь просто показываем форму
-        });
-
-        addTransactionButtonFilled.addEventListener('click', () => {
-            showAddTransactionForm(); // Теперь просто показываем форму
-        });
-
-        // (Остальные обработчики navHome и navSettings остаются без изменений)
 
         addTransactionButtonEmpty.addEventListener('click', () => {
             // В реальном приложении здесь будет открытие формы добавления транзакции
@@ -432,4 +265,8 @@
 
     </script>
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> 582314a28409e93849dbb37c960e56499b123e8f
