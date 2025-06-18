@@ -10,57 +10,78 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>    
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-
     <script>
         // 1. Ваш объект конфигурации Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCIHZ8s-n1DZYGNebbEG49DHHfm3NPagME",
-            authDomain: "watchcoin-7beb5.firebaseapp.com",
+            // Закомментировано: authDomain, если не нужен без Auth
+            // authDomain: "watchcoin-7beb5.firebaseapp.com",
             projectId: "watchcoin-7beb5",
             storageBucket: "watchcoin-7beb5.appspot.com",
             messagingSenderId: "880513042675",
             appId: "1:880513042675:web:5b7e33260c595b25910f86",
-            measurementId: "G-8TMDZGN3EY"
+            // Закомментировано: measurementId, если Analytics не используется
+            // measurementId: "G-8TMDZGN3EY"
         };
 
         // 2. Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const functions = firebase.functions(); // Для вызова Cloud Functions
-        const db = firebase.firestore();       // Если используете Firestore на клиенте
+        // Закомментировано: Инициализация Auth
+        // const auth = firebase.auth();
+        // Закомментировано: Инициализация Functions
+        // const functions = firebase.functions();
+        const db = firebase.firestore();       // Оставляем, если планируется использовать Firestore для общих данных без аутентификации
 
         // --- Глобальные переменные для управления элементами UI ---
-        let MOCK_PORTFOLIO_DATA = []; // Перемещена сюда, чтобы быть доступной всем функциям
+        let MOCK_PORTFOLIO_DATA = []; 
         let isEditingMode = false;
 
-        // Получаем ссылки на элементы лоадера и основного контента
-        // Эти элементы будут добавлены в <body>
+        // Закомментировано: Получаем ссылки на элементы лоадера
         let loaderScreen;
-        let mainContentWrapper; // Переименован, чтобы не конфликтовать с .main-content
+        
+        // Новые ссылки на страницы Home и Settings
+        let homePage;
+        let settingsPage;
 
-        // Функции для управления видимостью экранов
+        // Закомментировано: Функции для управления видимостью экранов (лоадер)
+        /*
         function showLoader() {
             if (loaderScreen) loaderScreen.style.display = 'flex';
-            if (mainContentWrapper) mainContentWrapper.style.display = 'none';
+            if (homePage) homePage.style.display = 'none';
+            if (settingsPage) settingsPage.style.display = 'none';
+        }
+        */
+
+        // Функция для показа страницы Home
+        function showHomePage() {
+            // if (loaderScreen) loaderScreen.style.display = 'none'; // Закомментировано
+            if (homePage) homePage.style.display = 'flex'; 
+            if (settingsPage) settingsPage.style.display = 'none'; // Скрываем страницу настроек
+
+            if (Telegram && Telegram.WebApp) {
+                Telegram.WebApp.expand(); 
+                Telegram.WebApp.MainButton.hide(); 
+            }
+            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем портфолио при переходе на Home
         }
 
-        function showMainContent() {
-            if (loaderScreen) loaderScreen.style.display = 'none';
-            if (mainContentWrapper) mainContentWrapper.style.display = 'flex'; // Используем flex, т.к. ваш .main-content использует flex
+        // Функция для показа страницы Settings
+        function showSettingsPage() {
+            // if (loaderScreen) loaderScreen.style.display = 'none'; // Закомментировано
+            if (homePage) homePage.style.display = 'none'; // Скрываем страницу Home
+            if (settingsPage) settingsPage.style.display = 'flex'; 
+
             if (Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand(); // Расширяем Mini App
-                Telegram.WebApp.MainButton.hide(); // Прячем главную кнопку, если она не нужна
+                Telegram.WebApp.expand(); 
+                Telegram.WebApp.MainButton.hide(); 
             }
         }
 
-        // Функция для обновления информации о пользователе (можно использовать для отладки)
+        // Закомментировано: Функция для обновления информации о пользователе
+        /*
         function updateAuthUserInfo(user, telegramUserData) {
-            // Этот div (userInfoDiv) у вас находится внутри main-content, поэтому он станет виден, когда main-content покажется
-            const userInfoDiv = document.getElementById('userInfo'); // Добавьте div с id="userInfo" в ваш main-content, если его нет
+            const userInfoDiv = document.getElementById('userInfo'); 
             if (userInfoDiv && user) {
                 userInfoDiv.innerHTML = `
                     <p>Firebase UID: <b>${user.uid}</b></p>
@@ -71,18 +92,19 @@
                 userInfoDiv.innerHTML = '<p>Пользователь не аутентифицирован.</p>';
             }
         }
+        */
 
-        // Основная функция аутентификации
+        // Закомментировано: Основная функция аутентификации
+        /*
         async function authenticateWithTelegram() {
-            showLoader(); // Показываем лоадер в самом начале
+            showLoader(); 
 
-            // Задержка для демонстрации лоадера (можно убрать в продакшене)
             await new Promise(resolve => setTimeout(resolve, 1000)); 
 
             if (!Telegram || !Telegram.WebApp) {
                 console.error("Telegram Web App SDK is not available. Running outside Telegram.");
                 document.body.innerHTML = '<h1>Пожалуйста, откройте это Mini App внутри Telegram.</h1>';
-                showMainContent(); // Показываем главный экран с сообщением об ошибке
+                showHomePage(); // Показываем главную страницу с сообщением об ошибке
                 return;
             }
 
@@ -97,7 +119,7 @@
                 Telegram.WebApp.showAlert('Ошибка: Данные пользователя Telegram не найдены. Возможно, вы запускаете приложение не из Telegram.');
                 console.error('Telegram User data not found in initDataUnsafe.');
                 updateAuthUserInfo(null, {});
-                showMainContent(); // Показываем основной контент, но без аутентификации
+                showHomePage(); 
                 return;
             }
 
@@ -113,21 +135,18 @@
                 Telegram.WebApp.showAlert('Успешный вход в Firebase!');
 
                 updateAuthUserInfo(auth.currentUser, telegramUser);
-                showMainContent(); // Скрываем лоадер и показываем основной контент
+                showHomePage(); 
 
             } catch (error) {
                 console.error('Error authenticating with Telegram and Firebase:', error);
                 Telegram.WebApp.showAlert('Ошибка входа: ' + error.message);
-                updateAuthUserInfo(null, {}); // Очищаем информацию о пользователе
-                showMainContent(); // Скрываем лоадер даже при ошибке
+                updateAuthUserInfo(null, {}); 
+                showHomePage(); 
             }
         }
+        */
         
         // --- Ваш существующий JavaScript код для логики портфолио ---
-        // Эти функции должны быть определены до того, как они вызываются, 
-        // или до того, как DOM полностью загружен.
-        
-        // Функция для форматирования чисел (для денег и процентов)
         function formatCurrency(value) {
             return `$${value.toFixed(2)}`;
         }
@@ -136,7 +155,6 @@
             return `${value.toFixed(2)}%`;
         }
 
-        // Функция для расчета и обновления портфеля
         function updatePortfolio(portfolioData) {
             const emptyState = document.getElementById('emptyState');
             const portfolioContent = document.getElementById('portfolioContent');
@@ -147,14 +165,14 @@
             if (!portfolioData || portfolioData.length === 0) {
                 emptyState.style.display = 'flex';
                 portfolioContent.style.display = 'none';
-                isEditingMode = false; // Выключаем режим редактирования, если нет транзакций
+                isEditingMode = false; 
             } else {
                 emptyState.style.display = 'none';
                 portfolioContent.style.display = 'flex';
 
                 let totalValue = 0;
                 let totalInvested = 0;
-                tokenList.innerHTML = ''; // Очищаем список перед заполнением
+                tokenList.innerHTML = ''; 
 
                 portfolioData.forEach(token => {
                     const currentValue = token.quantity * token.currentPrice;
@@ -199,10 +217,9 @@
                 totalPortfolioValueElement.textContent = formatCurrency(totalValue);
                 portfolioProfitLossElement.innerHTML = `${totalProfitLossSign}${formatCurrency(totalProfitLossAbsolute)} <span class="${totalProfitLossClass}">(${totalProfitLossSign}${formatPercentage(totalProfitLossPercentage)})</span>`;
             }
-            addDeleteListeners(); // Добавляем слушателей после обновления DOM
+            addDeleteListeners(); 
         }
 
-        // Функция для добавления слушателей на кнопки удаления
         function addDeleteListeners() {
             document.querySelectorAll('.delete-token-btn').forEach(button => {
                 const newButton = button.cloneNode(true);
@@ -220,7 +237,7 @@
             });
         }
 
-        // --- Код для формы добавления транзакций (без изменений, кроме использования global variables) ---
+        // --- Код для формы добавления транзакций ---
         const addTransactionModal = document.getElementById('addTransactionModal');
         const coinTickerInput = document.getElementById('coinTicker');
         const coinSuggestions = document.getElementById('coinSuggestions');
@@ -260,7 +277,7 @@
             { name: "Bitcoin", ticker: "BTC", icon: "₿" },
             { name: "Ethereum", ticker: "ETH", icon: "Ξ" },
             { name: "Solana", ticker: "SOL", icon: "◎" },
-            { name: "Ripple", ticker: "XRP", icon: "XRP" },
+            { name: "S_Chain", ticker: "XRP", icon: "XRP" }, // Изменено с Ripple на S_Chain
             { name: "Cardano", ticker: "ADA", icon: "A" },
             { name: "Litecoin", ticker: "LTC", icon: "Ł" },
             { name: "Dogecoin", ticker: "DOGE", icon: "Ɖ" },
@@ -341,13 +358,14 @@
             showAddTransactionForm();
         });
 
+        // Обработчики для навигации
         navHome.addEventListener('click', () => {
             navHome.classList.add('active');
             navHome.classList.remove('inactive');
             navSettings.classList.add('inactive');
             navSettings.classList.remove('active');
             isEditingMode = false;
-            updatePortfolio(MOCK_PORTFOLIO_DATA);
+            showHomePage(); // Показываем страницу Home
         });
 
         navSettings.addEventListener('click', () => {
@@ -355,29 +373,24 @@
             navSettings.classList.remove('inactive');
             navHome.classList.add('inactive');
             navHome.classList.remove('active');
-            isEditingMode = !isEditingMode;
-            alert(`Settings clicked! Editing mode: ${isEditingMode ? 'ON' : 'OFF'}. Click again to toggle.`);
-            updatePortfolio(MOCK_PORTFOLIO_DATA);
+            isEditingMode = false; // Отключаем режим редактирования на странице настроек
+            showSettingsPage(); // Показываем страницу Settings
         });
 
-        // Инициализация лоадера и запуск аутентификации после загрузки DOM
+        // Инициализация (изменено: теперь просто показываем основной контент сразу)
         document.addEventListener('DOMContentLoaded', () => {
-            loaderScreen = document.getElementById('loader-screen');
-            mainContentWrapper = document.getElementById('mainContent'); // Ваша существующая оболочка
-            authenticateWithTelegram();
-            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем портфолио после загрузки
+            loaderScreen = document.getElementById('loader-screen'); // Закомментировано ранее, но оставляем ссылку, чтобы избежать ошибок
+            homePage = document.getElementById('homePage');
+            settingsPage = document.getElementById('settingsPage');
+
+            // authenticateWithTelegram(); // Закомментировано
+            showHomePage(); // Показываем страницу Home по умолчанию
         });
 
     </script>
 </head>
 <body>
-    <div id="loader-screen">
-        <div class="loader"></div>
-        <p style="margin-top: 20px; color: #333;">Загрузка...</p>
-    </div>
-
-    <div class="main-content" id="mainContent">
-
+    <div class="main-content" id="homePage">
         <div class="empty-state-container" id="emptyState">
             <div class="empty-state-image">
                 ✨
@@ -408,7 +421,22 @@
             <div class="token-list" id="tokenList">
             </div>
         </div>
+    </div>
 
+    <div class="main-content" id="settingsPage" style="display: none;">
+        <div class="settings-header">
+            Settings
+        </div>
+        <div class="settings-options">
+            <div class="settings-card">
+                <span class="settings-label">Currency</span>
+                <span class="settings-value">USD</span>
+            </div>
+            <div class="settings-card">
+                <span class="settings-label">Theme</span>
+                <span class="settings-value">Light</span>
+            </div>
+        </div>
     </div>
 
     <div class="bottom-navigation">
