@@ -6,7 +6,11 @@
     --text-secondary: #BABABA;
     --profit-green: #00CF5E;
     --loss-red: #F01C1C;
-    --button-add-bg: #E0E0E0; /* Новый цвет для кнопки "Add transaction" */
+    --button-add-bg: #E0E0E0;
+    --button-primary-bg: #007AFF;
+    --button-primary-text: #FFFFFF;
+    --input-border: #D1D1D6;
+    --input-focus: #007AFF;
 }
 
 body {
@@ -25,26 +29,26 @@ body {
 
 /* --- Стили для лоадера --- */
 #loader-screen {
-    position: fixed; /* Закрепляем на экране */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: white; /* Белый фон */
-    display: flex; /* Для центрирования контента */
+    background-color: white;
+    display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 9999; /* Чтобы лоадер был поверх всего */
+    z-index: 9999;
 }
 
 .loader {
-    border: 8px solid #f3f3f3; /* Светло-серый */
-    border-top: 8px solid #3498db; /* Синий */
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
     border-radius: 50%;
     width: 50px;
     height: 50px;
-    animation: spin 1s linear infinite; /* Анимация вращения */
+    animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -56,7 +60,7 @@ body {
 .main-content {
     flex-grow: 1;
     width: 100%;
-    display: none; /* Изначально скрываем основной контент */
+    display: none !important; /* Важно: изначально скрываем */
     flex-direction: column;
     align-items: center;
     padding: 20px 0;
@@ -65,7 +69,11 @@ body {
     padding-bottom: 80px;
 }
 
-/* --- Стили для пустого состояния (Экран 2.1) --- */
+.main-content.show {
+    display: flex !important; /* Класс для показа */
+}
+
+/* --- Стили для пустого состояния --- */
 .empty-state-container {
     display: flex;
     flex-direction: column;
@@ -95,7 +103,7 @@ body {
     margin-bottom: 16px;
 }
 
-/* --- Стили для заполненного портфеля (Экран 2.2) --- */
+/* --- Стили для заполненного портфеля --- */
 .portfolio-content {
     display: flex;
     flex-direction: column;
@@ -129,17 +137,18 @@ body {
 .profit-loss {
     font-size: 16px;
     font-weight: 500;
+    color: var(--text-secondary);
 }
 
-.profit-loss.positive {
+.profit-loss .positive {
     color: var(--profit-green);
 }
 
-.profit-loss.negative {
+.profit-loss .negative {
     color: var(--loss-red);
 }
 
-/* Кнопка Add transaction (общие стили для обоих состояний) */
+/* Кнопка Add transaction */
 .add-transaction-button {
     display: flex;
     flex-direction: column;
@@ -156,6 +165,7 @@ body {
     margin-bottom: 32px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s ease;
 }
 
 .add-transaction-button:active {
@@ -175,7 +185,7 @@ body {
     color: var(--text-primary);
 }
 
-/* Список токенов (плашки) */
+/* Список токенов */
 .token-list {
     width: 100%;
     padding: 0 16px;
@@ -195,6 +205,7 @@ body {
     background: var(--background-secondary);
     position: relative;
     overflow: hidden;
+    transition: all 0.2s ease;
 }
 
 .token-info-left {
@@ -255,6 +266,14 @@ body {
     margin-top: 2px;
 }
 
+.token-profit-loss.positive {
+    color: var(--profit-green);
+}
+
+.token-profit-loss.negative {
+    color: var(--loss-red);
+}
+
 /* Кнопка удаления для токена */
 .delete-token-btn {
     background: none;
@@ -271,18 +290,22 @@ body {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .token-card.editing .delete-token-btn {
     opacity: 1;
     pointer-events: all;
 }
-/* Сдвиг контента токен-карточки при режиме редактирования */
+
 .token-card.editing .token-info-left,
 .token-card.editing .token-info-right {
     transform: translateX(-20px);
 }
-
 
 /* Нижнее меню навигации */
 .bottom-navigation {
@@ -317,6 +340,7 @@ body {
     border-radius: 14px;
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
+    padding: 8px;
 }
 
 .nav-item.active {
@@ -340,7 +364,8 @@ body {
     font-size: 14px;
     font-weight: 500;
 }
-/* --- Стили для модального окна добавления транзакции --- */
+
+/* --- Стили для модального окна --- */
 .add-transaction-modal {
     display: none;
     position: fixed;
@@ -367,6 +392,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-content h2 {
@@ -381,9 +408,156 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    position: relative;
 }
 
 .form-group label {
     font-size: 14px;
-    font-weight: 500
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-group input {
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--input-focus);
+}
+
+.form-group input::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Стили для подсказок монет */
+.coin-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--background-primary);
+    border: 1px solid var(--input-border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+}
+
+.coin-suggestions:not(:empty) {
+    display: block;
+}
+
+.coin-suggestions div {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: background-color 0.2s ease;
+}
+
+.coin-suggestions div:hover {
+    background-color: var(--background-secondary);
+}
+
+.coin-suggestions div:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+/* Действия модального окна */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.button-cancel {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.button-cancel:hover {
+    background-color: var(--background-secondary);
+}
+
+.button-primary {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.button-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.button-primary:not(:disabled):hover {
+    opacity: 0.9;
+}
+
+.button-primary:active {
+    opacity: 0.8;
+}
+
+/* Дополнительные стили для userInfo */
+#userInfo {
+    padding: 16px;
+    margin: 16px;
+    background-color: var(--background-secondary);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: none; /* Скрываем по умолчанию */
+}
+
+#userInfo p {
+    margin: 4px 0;
+}
+
+#userInfo b {
+    color: var(--text-primary);
+}
+
+/* Медиа-запросы для мобильных устройств */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 16px;
+    }
+    
+    .bottom-navigation {
+        width: calc(100% - 20px);
+        margin-bottom: 10px;
+    }
+    
+    .main-content {
+        padding: 10px 0;
+        padding-bottom: 70px;
+    }
 }
