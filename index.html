@@ -6,8 +6,119 @@
     <title>My Portfolio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script> 
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+
+    <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIHZ8s-n1DZYGNebbEG49DHHfm3NPagME",
+    authDomain: "watchcoin-7beb5.firebaseapp.com",
+    projectId: "watchcoin-7beb5",
+    storageBucket: "watchcoin-7beb5.firebasestorage.app",
+    messagingSenderId: "880513042675",
+    appId: "1:880513042675:web:5b7e33260c595b25910f86",
+    measurementId: "G-8TMDZGN3EY"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+<script>
+      // 1. Ваш объект конфигурации Firebase (ВАШИ КЛЮЧИ И ID ПРОЕКТА!)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCIHZ8s-n1DZYGNebbEG49DHHfm3NPagME",
+        authDomain: "watchcoin-7beb5.firebaseapp.com",
+        projectId: "watchcoin-7beb5",
+        storageBucket: "watchcoin-7beb5.appspot.com",
+        messagingSenderId: "880513042675",
+        appId: "1:880513042675:web:5b7e33260c595b25910f86",
+        measurementId: "G-8TMDZGN3EY"
+      };
+
+      // 2. Инициализация Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const functions = firebase.functions(); // Для вызова Cloud Functions
+      const db = firebase.firestore();       // Если используете Firestore на клиенте
+
+      // --- НАЧАЛО КОДА АУТЕНТИФИКАЦИИ ---
+      // Проверяем, что Telegram Web App SDK загружен
+      if (Telegram && Telegram.WebApp) {
+        Telegram.WebApp.ready(); // Уведомляем Telegram о готовности Mini App
+
+        const initData = Telegram.WebApp.initData || '';
+        const initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
+
+        // Получаем ссылку на вызываемую функцию telegramAuth
+        const telegramAuthFunction = functions.httpsCallable('telegramAuth');
+
+        // Функция для аутентификации
+        async function authenticateWithTelegram() {
+          try {
+            // Вызываем Cloud Function и передаем ей initData
+            const result = await telegramAuthFunction({ initData: initData });
+            const customToken = result.data.customToken;
+
+            // Используем кастомный токен для входа в Firebase
+            await auth.signInWithCustomToken(customToken);
+
+            console.log('Successfully signed in to Firebase with Telegram!');
+            // Здесь вы можете обновить UI или перенаправить пользователя
+            Telegram.WebApp.showAlert('Успешный вход в Firebase!');
+
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+              const userInfoDiv = document.getElementById('userInfo');
+              userInfoDiv.innerHTML = `
+                <p>Firebase UID: <b>${currentUser.uid}</b></p>
+                <p>Привет, <b>${currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'пользователь')}</b>!</p>
+                <p>Из Telegram: <b>${initDataUnsafe.user ? initDataUnsafe.user.first_name + ' ' + initDataUnsafe.user.last_name : 'N/A'} (${initDataUnsafe.user ? initDataUnsafe.user.username : 'N/A'})</b></p>
+              `;
+              Telegram.WebApp.expand(); // Расширить Mini App, если нужно
+              Telegram.WebApp.MainButton.setText("Вы успешно вошли!").show();
+            }
+
+          } catch (error) {
+            console.error('Error authenticating with Telegram and Firebase:', error);
+            Telegram.WebApp.showAlert('Ошибка входа: ' + error.message);
+            Telegram.WebApp.MainButton.setText("Ошибка входа").show();
+          } finally {
+            // Закрыть загрузочный экран или индикатор
+            Telegram.WebApp.ready();
+          }
+        }
+
+        // Вызываем функцию аутентификации сразу при загрузке Mini App
+        authenticateWithTelegram();
+
+      } else {
+        console.error("Telegram Web App SDK is not available. Running outside Telegram.");
+        // Сообщение для отладки, если Mini App запускается не в Telegram
+        document.body.innerHTML = '<h1>Пожалуйста, откройте это Mini App внутри Telegram.</h1>';
+      }
+</script>
+
 </head>
 <body>
+    <h1>Добро пожаловать в Mini App!</h1>
+    <p>Пожалуйста, подождите, идет аутентификация...</p>
+    <div id="userInfo"></div>
+
     <div class="main-content" id="mainContent">
 
         <div class="empty-state-container" id="emptyState">
@@ -92,44 +203,7 @@
 
     <script>
         // Имитация данных портфеля (теперь mutable, чтобы можно было добавлять и удалять)
-        let MOCK_PORTFOLIO_DATA = [
-            {
-                id: 'btc-001',
-                name: "Bitcoin",
-                ticker: "BTC",
-                icon: "₿",
-                quantity: 0.15,
-                avgBuyPrice: 68000,
-                currentPrice: 70500
-            },
-            {
-                id: 'eth-002',
-                name: "Ethereum",
-                ticker: "ETH",
-                icon: "Ξ",
-                quantity: 1.2,
-                avgBuyPrice: 3500,
-                currentPrice: 3800
-            },
-            {
-                id: 'sol-003',
-                name: "Solana",
-                ticker: "SOL",
-                icon: "◎",
-                quantity: 15.5,
-                avgBuyPrice: 150,
-                currentPrice: 140
-            },
-            {
-                id: 'xrp-004',
-                name: "Ripple",
-                ticker: "XRP",
-                icon: "XRP",
-                quantity: 1000,
-                avgBuyPrice: 0.5,
-                currentPrice: 0.52
-            }
-        ];
+        let MOCK_PORTFOLIO_DATA = [];
 
         // Флаг для режима редактирования (показывать/скрывать кнопки удаления)
         let isEditingMode = false;
