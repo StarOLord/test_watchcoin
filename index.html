@@ -7,114 +7,374 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script> 
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>    
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+    <script>
+        // 1. Ваш объект конфигурации Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIHZ8s-n1DZYGNebbEG49DHHfm3NPagME",
+            authDomain: "watchcoin-7beb5.firebaseapp.com",
+            projectId: "watchcoin-7beb5",
+            storageBucket: "watchcoin-7beb5.appspot.com",
+            messagingSenderId: "880513042675",
+            appId: "1:880513042675:web:5b7e33260c595b25910f86",
+            measurementId: "G-8TMDZGN3EY"
+        };
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCIHZ8s-n1DZYGNebbEG49DHHfm3NPagME",
-    authDomain: "watchcoin-7beb5.firebaseapp.com",
-    projectId: "watchcoin-7beb5",
-    storageBucket: "watchcoin-7beb5.firebasestorage.app",
-    messagingSenderId: "880513042675",
-    appId: "1:880513042675:web:5b7e33260c595b25910f86",
-    measurementId: "G-8TMDZGN3EY"
-  };
+        // 2. Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const functions = firebase.functions(); // Для вызова Cloud Functions
+        const db = firebase.firestore();       // Если используете Firestore на клиенте
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
+        // --- Глобальные переменные для управления элементами UI ---
+        let MOCK_PORTFOLIO_DATA = []; // Перемещена сюда, чтобы быть доступной всем функциям
+        let isEditingMode = false;
 
-<script>
-      // 1. Ваш объект конфигурации Firebase (ВАШИ КЛЮЧИ И ID ПРОЕКТА!)
-      const firebaseConfig = {
-        apiKey: "AIzaSyCIHZ8s-n1DZYGNebbEG49DHHfm3NPagME",
-        authDomain: "watchcoin-7beb5.firebaseapp.com",
-        projectId: "watchcoin-7beb5",
-        storageBucket: "watchcoin-7beb5.appspot.com",
-        messagingSenderId: "880513042675",
-        appId: "1:880513042675:web:5b7e33260c595b25910f86",
-        measurementId: "G-8TMDZGN3EY"
-      };
+        // Получаем ссылки на элементы лоадера и основного контента
+        // Эти элементы будут добавлены в <body>
+        let loaderScreen;
+        let mainContentWrapper; // Переименован, чтобы не конфликтовать с .main-content
 
-      // 2. Инициализация Firebase
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const functions = firebase.functions(); // Для вызова Cloud Functions
-      const db = firebase.firestore();       // Если используете Firestore на клиенте
-
-      // --- НАЧАЛО КОДА АУТЕНТИФИКАЦИИ ---
-      // Проверяем, что Telegram Web App SDK загружен
-      if (Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready(); // Уведомляем Telegram о готовности Mini App
-
-        const initData = Telegram.WebApp.initData || '';
-        const initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
-
-        // Получаем ссылку на вызываемую функцию telegramAuth
-        const telegramAuthFunction = functions.httpsCallable('telegramAuth');
-
-        // Функция для аутентификации
-        async function authenticateWithTelegram() {
-          try {
-            // Вызываем Cloud Function и передаем ей initData
-            const result = await telegramAuthFunction({ initData: initData });
-            const customToken = result.data.customToken;
-
-            // Используем кастомный токен для входа в Firebase
-            await auth.signInWithCustomToken(customToken);
-
-            console.log('Successfully signed in to Firebase with Telegram!');
-            // Здесь вы можете обновить UI или перенаправить пользователя
-            Telegram.WebApp.showAlert('Успешный вход в Firebase!');
-
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-              const userInfoDiv = document.getElementById('userInfo');
-              userInfoDiv.innerHTML = `
-                <p>Firebase UID: <b>${currentUser.uid}</b></p>
-                <p>Привет, <b>${currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'пользователь')}</b>!</p>
-                <p>Из Telegram: <b>${initDataUnsafe.user ? initDataUnsafe.user.first_name + ' ' + initDataUnsafe.user.last_name : 'N/A'} (${initDataUnsafe.user ? initDataUnsafe.user.username : 'N/A'})</b></p>
-              `;
-              Telegram.WebApp.expand(); // Расширить Mini App, если нужно
-              Telegram.WebApp.MainButton.setText("Вы успешно вошли!").show();
-            }
-
-          } catch (error) {
-            console.error('Error authenticating with Telegram and Firebase:', error);
-            Telegram.WebApp.showAlert('Ошибка входа: ' + error.message);
-            Telegram.WebApp.MainButton.setText("Ошибка входа").show();
-          } finally {
-            // Закрыть загрузочный экран или индикатор
-            Telegram.WebApp.ready();
-          }
+        // Функции для управления видимостью экранов
+        function showLoader() {
+            if (loaderScreen) loaderScreen.style.display = 'flex';
+            if (mainContentWrapper) mainContentWrapper.style.display = 'none';
         }
 
-        // Вызываем функцию аутентификации сразу при загрузке Mini App
-        authenticateWithTelegram();
+        function showMainContent() {
+            if (loaderScreen) loaderScreen.style.display = 'none';
+            if (mainContentWrapper) mainContentWrapper.style.display = 'flex'; // Используем flex, т.к. ваш .main-content использует flex
+            if (Telegram && Telegram.WebApp) {
+                Telegram.WebApp.expand(); // Расширяем Mini App
+                Telegram.WebApp.MainButton.hide(); // Прячем главную кнопку, если она не нужна
+            }
+        }
 
-      } else {
-        console.error("Telegram Web App SDK is not available. Running outside Telegram.");
-        // Сообщение для отладки, если Mini App запускается не в Telegram
-        document.body.innerHTML = '<h1>Пожалуйста, откройте это Mini App внутри Telegram.</h1>';
-      }
-</script>
+        // Функция для обновления информации о пользователе (можно использовать для отладки)
+        function updateAuthUserInfo(user, telegramUserData) {
+            // Этот div (userInfoDiv) у вас находится внутри main-content, поэтому он станет виден, когда main-content покажется
+            const userInfoDiv = document.getElementById('userInfo'); // Добавьте div с id="userInfo" в ваш main-content, если его нет
+            if (userInfoDiv && user) {
+                userInfoDiv.innerHTML = `
+                    <p>Firebase UID: <b>${user.uid}</b></p>
+                    <p>Имя в Telegram: <b>${telegramUserData.first_name || 'N/A'} ${telegramUserData.last_name || ''}</b></p>
+                    <p>Username в Telegram: <b>@${telegramUserData.username || 'N/A'}</b></p>
+                `;
+            } else if (userInfoDiv) {
+                userInfoDiv.innerHTML = '<p>Пользователь не аутентифицирован.</p>';
+            }
+        }
 
+        // Основная функция аутентификации
+        async function authenticateWithTelegram() {
+            showLoader(); // Показываем лоадер в самом начале
+
+            // Задержка для демонстрации лоадера (можно убрать в продакшене)
+            await new Promise(resolve => setTimeout(resolve, 1000)); 
+
+            if (!Telegram || !Telegram.WebApp) {
+                console.error("Telegram Web App SDK is not available. Running outside Telegram.");
+                document.body.innerHTML = '<h1>Пожалуйста, откройте это Mini App внутри Telegram.</h1>';
+                showMainContent(); // Показываем главный экран с сообщением об ошибке
+                return;
+            }
+
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+
+            const initData = Telegram.WebApp.initData || '';
+            const initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
+            const telegramUser = initDataUnsafe.user || null;
+
+            if (!telegramUser || !telegramUser.id) {
+                Telegram.WebApp.showAlert('Ошибка: Данные пользователя Telegram не найдены. Возможно, вы запускаете приложение не из Telegram.');
+                console.error('Telegram User data not found in initDataUnsafe.');
+                updateAuthUserInfo(null, {});
+                showMainContent(); // Показываем основной контент, но без аутентификации
+                return;
+            }
+
+            const telegramAuthFunction = functions.httpsCallable('telegramAuth');
+
+            try {
+                const result = await telegramAuthFunction({ initData: initData });
+                const customToken = result.data.customToken;
+
+                await auth.signInWithCustomToken(customToken);
+
+                console.log('Successfully signed in to Firebase with Telegram!');
+                Telegram.WebApp.showAlert('Успешный вход в Firebase!');
+
+                updateAuthUserInfo(auth.currentUser, telegramUser);
+                showMainContent(); // Скрываем лоадер и показываем основной контент
+
+            } catch (error) {
+                console.error('Error authenticating with Telegram and Firebase:', error);
+                Telegram.WebApp.showAlert('Ошибка входа: ' + error.message);
+                updateAuthUserInfo(null, {}); // Очищаем информацию о пользователе
+                showMainContent(); // Скрываем лоадер даже при ошибке
+            }
+        }
+        
+        // --- Ваш существующий JavaScript код для логики портфолио ---
+        // Эти функции должны быть определены до того, как они вызываются, 
+        // или до того, как DOM полностью загружен.
+        
+        // Функция для форматирования чисел (для денег и процентов)
+        function formatCurrency(value) {
+            return `$${value.toFixed(2)}`;
+        }
+
+        function formatPercentage(value) {
+            return `${value.toFixed(2)}%`;
+        }
+
+        // Функция для расчета и обновления портфеля
+        function updatePortfolio(portfolioData) {
+            const emptyState = document.getElementById('emptyState');
+            const portfolioContent = document.getElementById('portfolioContent');
+            const tokenList = document.getElementById('tokenList');
+            const totalPortfolioValueElement = document.getElementById('totalPortfolioValue');
+            const portfolioProfitLossElement = document.getElementById('portfolioProfitLoss');
+
+            if (!portfolioData || portfolioData.length === 0) {
+                emptyState.style.display = 'flex';
+                portfolioContent.style.display = 'none';
+                isEditingMode = false; // Выключаем режим редактирования, если нет транзакций
+            } else {
+                emptyState.style.display = 'none';
+                portfolioContent.style.display = 'flex';
+
+                let totalValue = 0;
+                let totalInvested = 0;
+                tokenList.innerHTML = ''; // Очищаем список перед заполнением
+
+                portfolioData.forEach(token => {
+                    const currentValue = token.quantity * token.currentPrice;
+                    const investedValue = token.quantity * token.avgBuyPrice;
+                    const profitLossAbsolute = currentValue - investedValue;
+                    const profitLossPercentage = investedValue !== 0 ? (profitLossAbsolute / investedValue) * 100 : 0;
+
+                    totalValue += currentValue;
+                    totalInvested += investedValue;
+
+                    const profitLossClass = profitLossAbsolute >= 0 ? 'positive' : 'negative';
+                    const profitLossSign = profitLossAbsolute >= 0 ? '+' : '';
+
+                    const tokenCard = `
+                        <div class="token-card ${isEditingMode ? 'editing' : ''}" data-id="${token.id}">
+                            <div class="token-info-left">
+                                <div class="token-icon">${token.icon}</div>
+                                <div class="token-details">
+                                    <div class="token-name">${token.name}</div>
+                                    <div class="token-quantity-ticker">${token.quantity} ${token.ticker}</div>
+                                </div>
+                            </div>
+                            <div class="token-info-right">
+                                <div class="token-current-value">${formatCurrency(currentValue)}</div>
+                                <div class="token-profit-loss ${profitLossClass}">
+                                    ${profitLossSign}${formatPercentage(profitLossPercentage)}
+                                </div>
+                            </div>
+                            <button class="delete-token-btn" data-id="${token.id}">
+                                &times;
+                            </button>
+                        </div>
+                    `;
+                    tokenList.insertAdjacentHTML('beforeend', tokenCard);
+                });
+
+                const totalProfitLossAbsolute = totalValue - totalInvested;
+                const totalProfitLossPercentage = totalInvested !== 0 ? (totalProfitLossAbsolute / totalInvested) * 100 : 0;
+                const totalProfitLossClass = totalProfitLossAbsolute >= 0 ? 'positive' : 'negative';
+                const totalProfitLossSign = totalProfitLossAbsolute >= 0 ? '+' : '';
+
+                totalPortfolioValueElement.textContent = formatCurrency(totalValue);
+                portfolioProfitLossElement.innerHTML = `${totalProfitLossSign}${formatCurrency(totalProfitLossAbsolute)} <span class="${totalProfitLossClass}">(${totalProfitLossSign}${formatPercentage(totalProfitLossPercentage)})</span>`;
+            }
+            addDeleteListeners(); // Добавляем слушателей после обновления DOM
+        }
+
+        // Функция для добавления слушателей на кнопки удаления
+        function addDeleteListeners() {
+            document.querySelectorAll('.delete-token-btn').forEach(button => {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+            });
+
+            document.querySelectorAll('.delete-token-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const idToDelete = event.target.dataset.id;
+                    if (confirm('Are you sure you want to delete this transaction?')) {
+                        MOCK_PORTFOLIO_DATA = MOCK_PORTFOLIO_DATA.filter(token => token.id !== idToDelete);
+                        updatePortfolio(MOCK_PORTFOLIO_DATA);
+                    }
+                });
+            });
+        }
+
+        // --- Код для формы добавления транзакций (без изменений, кроме использования global variables) ---
+        const addTransactionModal = document.getElementById('addTransactionModal');
+        const coinTickerInput = document.getElementById('coinTicker');
+        const coinSuggestions = document.getElementById('coinSuggestions');
+        const quantityInput = document.getElementById('quantity');
+        const purchasePriceInput = document.getElementById('purchasePrice');
+        const purchaseDateInput = document.getElementById('purchaseDate');
+        const saveAddTransactionButton = document.getElementById('saveAddTransaction');
+        const cancelAddTransactionButton = document.getElementById('cancelAddTransaction');
+
+        const addTransactionButtonEmpty = document.getElementById('addTransactionButtonEmpty');
+        const addTransactionButtonFilled = document.getElementById('addTransactionButtonFilled');
+        const navHome = document.getElementById('navHome');
+        const navSettings = document.getElementById('navSettings');
+
+        function showAddTransactionForm() {
+            addTransactionModal.style.display = 'flex';
+            coinTickerInput.value = '';
+            quantityInput.value = '';
+            purchasePriceInput.value = '';
+            purchaseDateInput.value = new Date().toISOString().split('T')[0];
+            coinSuggestions.innerHTML = '';
+            saveAddTransactionButton.disabled = true;
+        }
+
+        function hideAddTransactionForm() {
+            addTransactionModal.style.display = 'none';
+        }
+
+        function validateAddTransactionForm() {
+            const isCoinFilled = coinTickerInput.value.trim() !== '';
+            const isQuantityFilled = parseFloat(quantityInput.value) > 0;
+            const isPriceFilled = parseFloat(purchasePriceInput.value) > 0;
+            saveAddTransactionButton.disabled = !(isCoinFilled && isQuantityFilled && isPriceFilled);
+        }
+
+        const AVAILABLE_COINS = [
+            { name: "Bitcoin", ticker: "BTC", icon: "₿" },
+            { name: "Ethereum", ticker: "ETH", icon: "Ξ" },
+            { name: "Solana", ticker: "SOL", icon: "◎" },
+            { name: "Ripple", ticker: "XRP", icon: "XRP" },
+            { name: "Cardano", ticker: "ADA", icon: "A" },
+            { name: "Litecoin", ticker: "LTC", icon: "Ł" },
+            { name: "Dogecoin", ticker: "DOGE", icon: "Ɖ" },
+            { name: "Polkadot", ticker: "DOT", icon: "●" },
+            { name: "Binance Coin", ticker: "BNB", icon: "BNB" }
+        ];
+
+        coinTickerInput.addEventListener('input', () => {
+            const query = coinTickerInput.value.trim().toLowerCase();
+            coinSuggestions.innerHTML = '';
+
+            if (query.length > 0) {
+                const filteredCoins = AVAILABLE_COINS.filter(coin =>
+                    coin.name.toLowerCase().includes(query) ||
+                    coin.ticker.toLowerCase().includes(query)
+                );
+
+                filteredCoins.forEach(coin => {
+                    const suggestionDiv = document.createElement('div');
+                    suggestionDiv.textContent = `${coin.name} (${coin.ticker})`;
+                    suggestionDiv.addEventListener('click', () => {
+                        coinTickerInput.value = coin.ticker;
+                        coinSuggestions.innerHTML = '';
+                        validateAddTransactionForm();
+                    });
+                    coinSuggestions.appendChild(suggestionDiv);
+                });
+            }
+            validateAddTransactionForm();
+        });
+
+        coinTickerInput.addEventListener('change', validateAddTransactionForm);
+        quantityInput.addEventListener('input', validateAddTransactionForm);
+        purchasePriceInput.addEventListener('input', validateAddTransactionForm);
+
+        saveAddTransactionButton.addEventListener('click', () => {
+            const ticker = coinTickerInput.value.trim().toUpperCase();
+            const quantity = parseFloat(quantityInput.value);
+            const purchasePrice = parseFloat(purchasePriceInput.value);
+            const purchaseDate = purchaseDateInput.value;
+
+            if (!ticker || quantity <= 0 || purchasePrice <= 0) {
+                alert('Please fill in all required fields with valid numbers.');
+                return;
+            }
+
+            const selectedCoin = AVAILABLE_COINS.find(coin => coin.ticker === ticker);
+            const coinName = selectedCoin ? selectedCoin.name : ticker;
+            const coinIcon = selectedCoin ? selectedCoin.icon : ticker.substring(0,1).toUpperCase();
+
+            const currentPrice = purchasePrice * (1 + (Math.random() * 0.1 - 0.05));
+
+            const newTransaction = {
+                id: `txn-${Date.now()}`,
+                name: coinName,
+                ticker: ticker,
+                icon: coinIcon,
+                quantity: quantity,
+                avgBuyPrice: purchasePrice,
+                currentPrice: currentPrice,
+                purchaseDate: purchaseDate
+            };
+
+            MOCK_PORTFOLIO_DATA.push(newTransaction);
+            updatePortfolio(MOCK_PORTFOLIO_DATA);
+            hideAddTransactionForm();
+        });
+
+        cancelAddTransactionButton.addEventListener('click', () => {
+            hideAddTransactionForm();
+        });
+
+        addTransactionButtonEmpty.addEventListener('click', () => {
+            showAddTransactionForm();
+        });
+
+        addTransactionButtonFilled.addEventListener('click', () => {
+            showAddTransactionForm();
+        });
+
+        navHome.addEventListener('click', () => {
+            navHome.classList.add('active');
+            navHome.classList.remove('inactive');
+            navSettings.classList.add('inactive');
+            navSettings.classList.remove('active');
+            isEditingMode = false;
+            updatePortfolio(MOCK_PORTFOLIO_DATA);
+        });
+
+        navSettings.addEventListener('click', () => {
+            navSettings.classList.add('active');
+            navSettings.classList.remove('inactive');
+            navHome.classList.add('inactive');
+            navHome.classList.remove('active');
+            isEditingMode = !isEditingMode;
+            alert(`Settings clicked! Editing mode: ${isEditingMode ? 'ON' : 'OFF'}. Click again to toggle.`);
+            updatePortfolio(MOCK_PORTFOLIO_DATA);
+        });
+
+        // Инициализация лоадера и запуск аутентификации после загрузки DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            loaderScreen = document.getElementById('loader-screen');
+            mainContentWrapper = document.getElementById('mainContent'); // Ваша существующая оболочка
+            authenticateWithTelegram();
+            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем портфолио после загрузки
+        });
+
+    </script>
 </head>
 <body>
+    <div id="loader-screen">
+        <div class="loader"></div>
+        <p style="margin-top: 20px; color: #333;">Загрузка...</p>
+    </div>
 
     <div class="main-content" id="mainContent">
 
@@ -198,278 +458,5 @@
         </div>
     </div>
 
-    <script>
-        // Имитация данных портфеля (теперь mutable, чтобы можно было добавлять и удалять)
-        let MOCK_PORTFOLIO_DATA = [];
-
-        // Флаг для режима редактирования (показывать/скрывать кнопки удаления)
-        let isEditingMode = false;
-
-        // Функция для форматирования чисел (для денег и процентов)
-        function formatCurrency(value) {
-            return `$${value.toFixed(2)}`;
-        }
-
-        function formatPercentage(value) {
-            return `${value.toFixed(2)}%`;
-        }
-
-        // Функция для расчета и обновления портфеля
-        function updatePortfolio(portfolioData) {
-            const emptyState = document.getElementById('emptyState');
-            const portfolioContent = document.getElementById('portfolioContent');
-            const tokenList = document.getElementById('tokenList');
-            const totalPortfolioValueElement = document.getElementById('totalPortfolioValue');
-            const portfolioProfitLossElement = document.getElementById('portfolioProfitLoss');
-
-            if (!portfolioData || portfolioData.length === 0) {
-                emptyState.style.display = 'flex';
-                portfolioContent.style.display = 'none';
-                isEditingMode = false; // Выключаем режим редактирования, если нет транзакций
-            } else {
-                emptyState.style.display = 'none';
-                portfolioContent.style.display = 'flex';
-
-                let totalValue = 0;
-                let totalInvested = 0;
-                tokenList.innerHTML = ''; // Очищаем список перед заполнением
-
-                portfolioData.forEach(token => {
-                    const currentValue = token.quantity * token.currentPrice;
-                    const investedValue = token.quantity * token.avgBuyPrice;
-                    const profitLossAbsolute = currentValue - investedValue;
-                    // Избегаем деления на ноль, если investedValue равно 0
-                    const profitLossPercentage = investedValue !== 0 ? (profitLossAbsolute / investedValue) * 100 : 0;
-
-                    totalValue += currentValue;
-                    totalInvested += investedValue;
-
-                    const profitLossClass = profitLossAbsolute >= 0 ? 'positive' : 'negative';
-                    const profitLossSign = profitLossAbsolute >= 0 ? '+' : '';
-
-                    const tokenCard = `
-                        <div class="token-card ${isEditingMode ? 'editing' : ''}" data-id="${token.id}">
-                            <div class="token-info-left">
-                                <div class="token-icon">${token.icon}</div>
-                                <div class="token-details">
-                                    <div class="token-name">${token.name}</div>
-                                    <div class="token-quantity-ticker">${token.quantity} ${token.ticker}</div>
-                                </div>
-                            </div>
-                            <div class="token-info-right">
-                                <div class="token-current-value">${formatCurrency(currentValue)}</div>
-                                <div class="token-profit-loss ${profitLossClass}">
-                                    ${profitLossSign}${formatPercentage(profitLossPercentage)}
-                                </div>
-                            </div>
-                            <button class="delete-token-btn" data-id="${token.id}">
-                                &times;
-                            </button>
-                        </div>
-                    `;
-                    tokenList.insertAdjacentHTML('beforeend', tokenCard);
-                });
-
-                const totalProfitLossAbsolute = totalValue - totalInvested;
-                // Избегаем деления на ноль, если totalInvested равно 0
-                const totalProfitLossPercentage = totalInvested !== 0 ? (totalProfitLossAbsolute / totalInvested) * 100 : 0;
-                const totalProfitLossClass = totalProfitLossAbsolute >= 0 ? 'positive' : 'negative';
-                const totalProfitLossSign = totalProfitLossAbsolute >= 0 ? '+' : '';
-
-                totalPortfolioValueElement.textContent = formatCurrency(totalValue);
-                portfolioProfitLossElement.innerHTML = `${totalProfitLossSign}${formatCurrency(totalProfitLossAbsolute)} <span class="${totalProfitLossClass}">(${totalProfitLossSign}${formatPercentage(totalProfitLossPercentage)})</span>`;
-            }
-            addDeleteListeners(); // Добавляем слушателей после обновления DOM
-        }
-
-        // Функция для добавления слушателей на кнопки удаления
-        function addDeleteListeners() {
-            // Удаляем предыдущие слушатели, чтобы избежать дублирования при каждом вызове updatePortfolio
-            document.querySelectorAll('.delete-token-btn').forEach(button => {
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button); // Заменяем элемент, чтобы сбросить слушатели
-            });
-
-            // Добавляем новые слушатели
-            document.querySelectorAll('.delete-token-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const idToDelete = event.target.dataset.id;
-                    if (confirm('Are you sure you want to delete this transaction?')) {
-                        MOCK_PORTFOLIO_DATA = MOCK_PORTFOLIO_DATA.filter(token => token.id !== idToDelete);
-                        updatePortfolio(MOCK_PORTFOLIO_DATA);
-                    }
-                });
-            });
-        }
-
-        // Инициализация портфеля при загрузке
-        updatePortfolio(MOCK_PORTFOLIO_DATA); // Запускаем с моковыми данными
-
-        // ====================================================================
-        // === НАЧАЛО КОДА ДЛЯ ФОРМЫ ДОБАВЛЕНИЯ ТРАНЗАКЦИЙ ===
-        // ====================================================================
-
-        // Получаем ссылки на элементы модального окна и его полей
-        const addTransactionModal = document.getElementById('addTransactionModal');
-        const coinTickerInput = document.getElementById('coinTicker');
-        const coinSuggestions = document.getElementById('coinSuggestions');
-        const quantityInput = document.getElementById('quantity');
-        const purchasePriceInput = document.getElementById('purchasePrice');
-        const purchaseDateInput = document.getElementById('purchaseDate');
-        const saveAddTransactionButton = document.getElementById('saveAddTransaction');
-        const cancelAddTransactionButton = document.getElementById('cancelAddTransaction');
-
-        // Получаем ссылки на кнопки "Add transaction" и навигационные кнопки.
-        // Убедитесь, что эти переменные объявляются только один раз.
-        const addTransactionButtonEmpty = document.getElementById('addTransactionButtonEmpty');
-        const addTransactionButtonFilled = document.getElementById('addTransactionButtonFilled');
-        const navHome = document.getElementById('navHome');
-        const navSettings = document.getElementById('navSettings');
-
-        // --- Функция для показа формы добавления ---
-        function showAddTransactionForm() {
-            addTransactionModal.style.display = 'flex'; // Показываем модальное окно
-            // Сбрасываем поля формы
-            coinTickerInput.value = '';
-            quantityInput.value = '';
-            purchasePriceInput.value = '';
-            purchaseDateInput.value = new Date().toISOString().split('T')[0]; // Устанавливаем текущую дату
-            coinSuggestions.innerHTML = ''; // Очищаем предложения
-            saveAddTransactionButton.disabled = true; // Делаем кнопку неактивной по умолчанию
-        }
-
-        // --- Функция для скрытия формы добавления ---
-        function hideAddTransactionForm() {
-            addTransactionModal.style.display = 'none'; // Скрываем модальное окно
-        }
-
-        // --- Валидация формы и активация кнопки сохранения ---
-        function validateAddTransactionForm() {
-            const isCoinFilled = coinTickerInput.value.trim() !== '';
-            const isQuantityFilled = parseFloat(quantityInput.value) > 0;
-            const isPriceFilled = parseFloat(purchasePriceInput.value) > 0;
-            saveAddTransactionButton.disabled = !(isCoinFilled && isQuantityFilled && isPriceFilled);
-        }
-
-        // --- Список доступных монет для автодополнения (для MVP) ---
-        const AVAILABLE_COINS = [
-            { name: "Bitcoin", ticker: "BTC", icon: "₿" },
-            { name: "Ethereum", ticker: "ETH", icon: "Ξ" },
-            { name: "Solana", ticker: "SOL", icon: "◎" },
-            { name: "Ripple", ticker: "XRP", icon: "XRP" },
-            { name: "Cardano", ticker: "ADA", icon: "A" },
-            { name: "Litecoin", ticker: "LTC", icon: "Ł" },
-            { name: "Dogecoin", ticker: "DOGE", icon: "Ɖ" },
-            { name: "Polkadot", ticker: "DOT", icon: "●" },
-            { name: "Binance Coin", ticker: "BNB", icon: "BNB" }
-        ];
-
-        // --- Логика автодополнения для поля монеты ---
-        coinTickerInput.addEventListener('input', () => {
-            const query = coinTickerInput.value.trim().toLowerCase();
-            coinSuggestions.innerHTML = '';
-
-            if (query.length > 0) {
-                const filteredCoins = AVAILABLE_COINS.filter(coin =>
-                    coin.name.toLowerCase().includes(query) ||
-                    coin.ticker.toLowerCase().includes(query)
-                );
-
-                filteredCoins.forEach(coin => {
-                    const suggestionDiv = document.createElement('div');
-                    suggestionDiv.textContent = `${coin.name} (${coin.ticker})`;
-                    suggestionDiv.addEventListener('click', () => {
-                        coinTickerInput.value = coin.ticker; // Вставляем тикер
-                        coinSuggestions.innerHTML = ''; // Очищаем предложения
-                        validateAddTransactionForm();
-                    });
-                    coinSuggestions.appendChild(suggestionDiv);
-                });
-            }
-            validateAddTransactionForm();
-        });
-
-        // Слушатели для валидации формы при изменении полей
-        coinTickerInput.addEventListener('change', validateAddTransactionForm);
-        quantityInput.addEventListener('input', validateAddTransactionForm);
-        purchasePriceInput.addEventListener('input', validateAddTransactionForm);
-
-
-        // --- Обработчик для кнопки "Add Transaction" (в модальном окне) ---
-        saveAddTransactionButton.addEventListener('click', () => {
-            const ticker = coinTickerInput.value.trim().toUpperCase();
-            const quantity = parseFloat(quantityInput.value);
-            const purchasePrice = parseFloat(purchasePriceInput.value);
-            const purchaseDate = purchaseDateInput.value;
-
-            if (!ticker || quantity <= 0 || purchasePrice <= 0) {
-                alert('Please fill in all required fields with valid numbers.');
-                return;
-            }
-
-            const selectedCoin = AVAILABLE_COINS.find(coin => coin.ticker === ticker);
-            const coinName = selectedCoin ? selectedCoin.name : ticker;
-            const coinIcon = selectedCoin ? selectedCoin.icon : ticker.substring(0,1).toUpperCase();
-
-            // Имитация текущей цены - в реальном приложении это будет запрос к API
-            const currentPrice = purchasePrice * (1 + (Math.random() * 0.1 - 0.05)); // Случайное изменение на +/- 5%
-
-            const newTransaction = {
-                id: `txn-${Date.now()}`, // Уникальный ID транзакции
-                name: coinName,
-                ticker: ticker,
-                icon: coinIcon,
-                quantity: quantity,
-                avgBuyPrice: purchasePrice,
-                currentPrice: currentPrice,
-                purchaseDate: purchaseDate
-            };
-
-            MOCK_PORTFOLIO_DATA.push(newTransaction);
-            updatePortfolio(MOCK_PORTFOLIO_DATA);
-            hideAddTransactionForm();
-        });
-
-        // --- Обработчик для кнопки "Cancel" в модальном окне ---
-        cancelAddTransactionButton.addEventListener('click', () => {
-            hideAddTransactionForm();
-        });
-
-        // ====================================================================
-        // === ОБРАБОТЧИКИ СОБЫТИЙ ДЛЯ ГЛАВНЫХ КНОПОК И НАВИГАЦИИ ===
-        // === Эти обработчики используют функции, определенные выше ===
-        // ====================================================================
-
-        // Обработчики для кнопок "Add transaction"
-        // Эти строки ЗАМЕНЯЮТ старые обработчики, которые вызывали alert
-        addTransactionButtonEmpty.addEventListener('click', () => {
-            showAddTransactionForm(); // Теперь просто показываем форму
-        });
-
-        addTransactionButtonFilled.addEventListener('click', () => {
-            showAddTransactionForm(); // Теперь просто показываем форму
-        });
-
-        // Обработчики для навигации
-        navHome.addEventListener('click', () => {
-            navHome.classList.add('active');
-            navHome.classList.remove('inactive');
-            navSettings.classList.add('inactive');
-            navSettings.classList.remove('active');
-            isEditingMode = false; // Выключаем режим редактирования при переходе на Home
-            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем, чтобы скрыть кнопки удаления
-        });
-
-        navSettings.addEventListener('click', () => {
-            navSettings.classList.add('active');
-            navSettings.classList.remove('inactive');
-            navHome.classList.add('inactive');
-            navHome.classList.remove('active');
-            isEditingMode = !isEditingMode; // Переключаем режим редактирования
-            alert(`Settings clicked! Editing mode: ${isEditingMode ? 'ON' : 'OFF'}. Click again to toggle.`);
-            updatePortfolio(MOCK_PORTFOLIO_DATA); // Обновляем, чтобы показать/скрыть кнопки удаления
-        });
-
-    </script>
 </body>
 </html>
